@@ -1,0 +1,40 @@
+{
+  "schemaVersion": 1,
+  "id": "enhancednetheritearmour",
+  "version": "${version}",
+  "name": "Enhanced Netherite Armour",
+  "description": "Gain Fire Resistance when wearing a full set of Netherite armour.",
+  "authors": [
+    "SwordfishBE"
+  ],
+  "contact": {
+    "homepage": "https://github.com/SwordfishBE/Enhanced-Netherite-Armour",
+    "sources": "https://github.com/SwordfishBE/Enhanced-Netherite-Armour",
+    "issues": "https://github.com/SwordfishBE/Enhanced-Netherite-Armour/issues",
+	"email": "swordfishbe@locutus.net"
+  },
+  "license": "AGPL-3.0",
+  "icon": "assets/enhancednetheritearmour/icon.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "net.ena.EnhancedNetheriteArmour"
+    ],
+    "modmenu": [
+      "net.ena.client.EnhancedNetheriteArmourModMenuIntegration"
+    ]
+  },
+  "depends": {
+    "fabricloader": ">=0.19.2",
+    "fabric-api": "*",
+    "fabric-permissions-api-v0": "*",
+    "minecraft": "~26.1.2",
+    "java": ">=25"
+  },
+  "suggests": {
+    "armored_elytra": "*",
+    "cloth-config": "*",
+    "luckperms": "*",
+    "modmenu": "*"
+  }
+}
