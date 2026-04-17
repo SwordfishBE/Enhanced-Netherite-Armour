@@ -62,14 +62,25 @@ public final class ModrinthUpdateChecker {
                 return;
             }
 
-            Optional<VersionCandidate> latestVersion = extractLatestVersion(response.body(), currentMinecraftVersion());
-            if (latestVersion.isEmpty()) {
+            UpdateCheckResult result = extractLatestVersion(response.body(), currentMinecraftVersion());
+            if (result.latestRelease() == null) {
                 EnhancedNetheriteArmour.LOGGER.debug("{} Update check returned no usable versions.",
                         EnhancedNetheriteArmour.prefix());
                 return;
             }
 
-            String newestVersion = latestVersion.get().versionNumber();
+            VersionCandidate latestCompatibleRelease = result.latestCompatibleRelease();
+            if (latestCompatibleRelease == null) {
+                EnhancedNetheriteArmour.LOGGER.debug(
+                        "{} No compatible Modrinth release found for Minecraft {}. Latest release overall: {}.",
+                        EnhancedNetheriteArmour.prefix(),
+                        currentMinecraftVersion(),
+                        result.latestRelease().versionNumber()
+                );
+                return;
+            }
+
+            String newestVersion = latestCompatibleRelease.versionNumber();
             if (isNewerVersion(newestVersion, EnhancedNetheriteArmour.MOD_VERSION)) {
                 EnhancedNetheriteArmour.LOGGER.warn("{} New version available: {} (current: {}).",
                         EnhancedNetheriteArmour.prefix(), newestVersion, EnhancedNetheriteArmour.MOD_VERSION);
@@ -86,10 +97,10 @@ public final class ModrinthUpdateChecker {
         }
     }
 
-    private static Optional<VersionCandidate> extractLatestVersion(String responseBody, String minecraftVersion) {
+    private static UpdateCheckResult extractLatestVersion(String responseBody, String minecraftVersion) {
         JsonElement root = JsonParser.parseString(responseBody);
         if (!root.isJsonArray()) {
-            return Optional.empty();
+            return new UpdateCheckResult(null, null);
         }
 
         JsonArray versions = root.getAsJsonArray();
@@ -126,7 +137,7 @@ public final class ModrinthUpdateChecker {
             }
         }
 
-        return Optional.ofNullable(newestCompatibleRelease != null ? newestCompatibleRelease : newestRelease);
+        return new UpdateCheckResult(newestCompatibleRelease, newestRelease);
     }
 
     private static String getString(JsonObject object, String key) {
@@ -201,5 +212,8 @@ public final class ModrinthUpdateChecker {
     }
 
     private record VersionCandidate(String versionNumber, Instant publishedAt) {
+    }
+
+    private record UpdateCheckResult(VersionCandidate latestCompatibleRelease, VersionCandidate latestRelease) {
     }
 }

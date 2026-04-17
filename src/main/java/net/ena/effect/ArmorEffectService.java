@@ -12,10 +12,15 @@ import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.UUID;
+
 public final class ArmorEffectService {
 
     private static final int EFFECT_DURATION_TICKS = 340;
     private static final int REFRESH_THRESHOLD_TICKS = 80;
+    private final Set<UUID> managedPlayers = new HashSet<>();
 
     public void tick(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
@@ -63,8 +68,15 @@ public final class ArmorEffectService {
 
     private void ensureEffect(ServerPlayer player) {
         MobEffectInstance current = player.getEffect(MobEffects.FIRE_RESISTANCE);
-        if (current != null && current.getAmplifier() == 0 && !current.endsWithin(REFRESH_THRESHOLD_TICKS)) {
-            return;
+        if (current != null) {
+            if (isManagedEffect(current)) {
+                managedPlayers.add(player.getUUID());
+                if (!current.endsWithin(REFRESH_THRESHOLD_TICKS)) {
+                    return;
+                }
+            } else {
+                managedPlayers.remove(player.getUUID());
+            }
         }
 
         player.addEffect(new MobEffectInstance(
@@ -75,27 +87,38 @@ public final class ArmorEffectService {
                 false,
                 false
         ));
+
+        MobEffectInstance updated = player.getEffect(MobEffects.FIRE_RESISTANCE);
+        if (updated != null && isManagedEffect(updated)) {
+            managedPlayers.add(player.getUUID());
+        }
     }
 
     private void removeManagedEffect(ServerPlayer player) {
-        MobEffectInstance current = player.getEffect(MobEffects.FIRE_RESISTANCE);
-        if (current == null) {
+        if (!managedPlayers.contains(player.getUUID())) {
             return;
         }
 
-        if (current.getAmplifier() != 0) {
+        MobEffectInstance current = player.getEffect(MobEffects.FIRE_RESISTANCE);
+        if (current == null) {
+            managedPlayers.remove(player.getUUID());
             return;
         }
-        if (current.isAmbient()) {
-            return;
-        }
-        if (current.isVisible()) {
-            return;
-        }
-        if (!current.endsWithin(EFFECT_DURATION_TICKS)) {
+
+        if (!isManagedEffect(current)) {
+            managedPlayers.remove(player.getUUID());
             return;
         }
 
         player.removeEffect(MobEffects.FIRE_RESISTANCE);
+        managedPlayers.remove(player.getUUID());
+    }
+
+    private boolean isManagedEffect(MobEffectInstance effect) {
+        return effect.getAmplifier() == 0
+                && !effect.isAmbient()
+                && !effect.isVisible()
+                && !effect.showIcon()
+                && effect.endsWithin(EFFECT_DURATION_TICKS);
     }
 }
