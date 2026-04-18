@@ -16,6 +16,8 @@ Give a full Netherite set the extra heat-proof edge it deserves.
 
 Remove any one of those pieces, and the effect is removed again.
 
+This mod is designed to stay simple, vanilla-friendly, and server-friendly.
+
 ---
 
 ## ✨ Features
@@ -28,7 +30,7 @@ Remove any one of those pieces, and the effect is removed again.
 - Optional LuckPerms support through `fabric-permissions-api`
 - Optional Mod Menu support
 - Optional Cloth Config screen when Cloth Config is installed
-- Optional compatibility with Armored Elytra and a matching datapack format
+- Optional compatibility with Armored Elytra and compatible datapacks.
 
 ---
 
@@ -54,8 +56,9 @@ When `armoredElytraSupport` is enabled, the mod also supports:
 
 This mod can detect compatible armored elytra items from:
 
-- The [**Armored Elytra**](https://modrinth.com/datapack/elytra-armor) mod
-- the [**Vanilla Tweaks Armored Elytra**](https://www.vanillatweaks.net) datapack
+- The [**Armored Elytra**](https://modrinth.com/datapack/elytra-armor) mod by DorkixAzIgazi
+- The [**Armored Elytra**](https://www.vanillatweaks.net) datapack by Vanilla Tweaks
+- The [**Plated_Elytra**](https://mc.voodoobeard.com/) datapack by VoodooBeard
 
 Support for both can be enabled or disabled with one config option:
 
