@@ -48,6 +48,12 @@ public final class EnhancedNetheriteArmourClothConfigScreen {
                 .setSaveConsumer(value -> config.armoredElytraSupport = value)
                 .build());
 
+        general.addEntry(entries.startBooleanToggle(Component.literal("Horse Fire Protection"), config.horseFireProtection)
+                .setDefaultValue(true)
+                .setTooltip(Component.literal("Give Fire Resistance to horses wearing Netherite Horse Armor."))
+                .setSaveConsumer(value -> config.horseFireProtection = value)
+                .build());
+
         return builder.build();
     }
 }

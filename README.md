@@ -16,8 +16,6 @@ Give a full Netherite set the extra heat-proof edge it deserves.
 
 Remove any one of those pieces, and the effect is removed again.
 
-This mod is designed to stay simple, vanilla-friendly, and server-friendly.
-
 ---
 
 ## ✨ Features
@@ -30,7 +28,8 @@ This mod is designed to stay simple, vanilla-friendly, and server-friendly.
 - Optional LuckPerms support through `fabric-permissions-api`
 - Optional Mod Menu support
 - Optional Cloth Config screen when Cloth Config is installed
-- Optional compatibility with Armored Elytra and compatible datapacks.
+- Optional compatibility with Armored Elytra and supported armored elytra datapacks
+- Optional Fire Resistance for horses wearing Netherite Horse Armor
 
 ---
 
@@ -42,6 +41,8 @@ By default, the mod works with the standard full Netherite set:
 - Netherite Chestplate
 - Netherite Leggings
 - Netherite Boots
+
+When `horseFireProtection` is enabled, horses wearing Netherite Horse Armor also receive Fire Resistance.
 
 When `armoredElytraSupport` is enabled, the mod also supports:
 
@@ -56,11 +57,11 @@ When `armoredElytraSupport` is enabled, the mod also supports:
 
 This mod can detect compatible armored elytra items from:
 
-- The [**Armored Elytra**](https://modrinth.com/datapack/elytra-armor) mod by DorkixAzIgazi
-- The [**Armored Elytra**](https://www.vanillatweaks.net) datapack by Vanilla Tweaks
-- The [**Plated_Elytra**](https://mc.voodoobeard.com/) datapack by VoodooBeard
+- The [**Armored Elytra**](https://modrinth.com/datapack/elytra-armor) mod
+- the [**Vanilla Tweaks Armored Elytra**](https://www.vanillatweaks.net) datapack
+- the **Plated_Elytra** datapack by VoodooBeard
 
-Support for both can be enabled or disabled with one config option:
+Support can be enabled or disabled with one config option:
 
 - `armoredElytraSupport`
 
@@ -124,7 +125,10 @@ Available options:
   Lets players use `/ena enable` and `/ena disable`
 
 - `armoredElytraSupport`  
-  Enables support for Armored Elytra items and the compatible datapack format
+  Enables support for Armored Elytra items and supported datapack formats
+
+- `horseFireProtection`  
+  Gives Fire Resistance to horses wearing Netherite Horse Armor
   
 ---
 

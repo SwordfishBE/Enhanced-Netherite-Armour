@@ -22,6 +22,7 @@ public final class EnaConfig {
     public boolean useLuckPerms = false;
     public boolean allowPlayerToggle = true;
     public boolean armoredElytraSupport = true;
+    public boolean horseFireProtection = true;
 
     public static EnaConfig get() {
         return instance;
@@ -82,6 +83,7 @@ public final class EnaConfig {
         copy.useLuckPerms = useLuckPerms;
         copy.allowPlayerToggle = allowPlayerToggle;
         copy.armoredElytraSupport = armoredElytraSupport;
+        copy.horseFireProtection = horseFireProtection;
         return copy;
     }
 
@@ -106,7 +108,11 @@ public final class EnaConfig {
 
         appendComment(sb, "Enable support for Armored Elytra and the compatible datapack variant.");
         appendComment(sb, "If true, a Netherite armored elytra counts as the chest piece for the full-set check.");
-        appendProperty(sb, "armoredElytraSupport", config.armoredElytraSupport, false);
+        appendProperty(sb, "armoredElytraSupport", config.armoredElytraSupport, true);
+
+        appendComment(sb, "Give Fire Resistance to horses wearing Netherite Horse Armor.");
+        appendComment(sb, "This is a global server-side toggle and is not controlled per player.");
+        appendProperty(sb, "horseFireProtection", config.horseFireProtection, false);
         sb.append("}\n");
         return sb.toString();
     }
