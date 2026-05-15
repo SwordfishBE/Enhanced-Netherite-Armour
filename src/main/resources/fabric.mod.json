@@ -3,7 +3,7 @@
   "id": "enhancednetheritearmour",
   "version": "${version}",
   "name": "Enhanced Netherite Armour",
-  "description": "Gain Fire Resistance when wearing a full set of Netherite armour.",
+  "description": "Gain Fire Resistance with full Netherite armour and protect Netherite-armored horses from lava.",
   "authors": [
     "SwordfishBE"
   ],
@@ -24,6 +24,9 @@
       "net.ena.client.EnhancedNetheriteArmourModMenuIntegration"
     ]
   },
+  "mixins": [
+    "enhancednetheritearmour.mixins.json"
+  ],
   "depends": {
     "fabricloader": ">=0.19.2",
     "fabric-api": "*",

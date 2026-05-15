@@ -5,9 +5,11 @@
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/lZiW97rL?logo=modrinth&logoColor=white&label=Modrinth%20downloads)](https://modrinth.com/mod/enhanced-netherite-armour)
 [![CurseForge Downloads](https://img.shields.io/curseforge/dt/1515682?logo=curseforge&logoColor=white&label=CurseForge%20downloads)](https://www.curseforge.com/minecraft/mc-mods/enhanced-netherite-armour)
 
-Give a full Netherite set the extra heat-proof edge it deserves.
+Give Netherite gear the extra heat-proof edge it deserves, for both players and their horses.
 
-**Enhanced Netherite Armour** is a simple Fabric mod that grants **Fire Resistance** while a player is wearing:
+**Enhanced Netherite Armour** is a simple Fabric mod that grants **Fire Resistance** while a player is wearing a full Netherite armor set, and can also protect horses wearing Netherite Horse Armor from fire and sinking into lava.
+
+For players, wear all four pieces:
 
 - Netherite Helmet
 - Netherite Chestplate
@@ -42,7 +44,7 @@ By default, the mod works with the standard full Netherite set:
 - Netherite Leggings
 - Netherite Boots
 
-When `horseFireProtection` is enabled, horses wearing Netherite Horse Armor also receive Fire Resistance.
+When `horseFireProtection` is enabled, horses wearing Netherite Horse Armor also receive Fire Resistance, float upward in lava instead of sinking, can path through lava more like they do through water when following food, and dismount riders when fully submerged in lava.
 
 When `armoredElytraSupport` is enabled, the mod also supports:
 
@@ -57,9 +59,9 @@ When `armoredElytraSupport` is enabled, the mod also supports:
 
 This mod can detect compatible armored elytra items from:
 
-- The [**Armored Elytra**](https://modrinth.com/datapack/elytra-armor) mod
-- the [**Vanilla Tweaks Armored Elytra**](https://www.vanillatweaks.net) datapack
-- the **Plated_Elytra** datapack by VoodooBeard
+- The [**Armored Elytra**](https://modrinth.com/datapack/elytra-armor) mod by DorkixAzIgazi
+- the [**Armored Elytra**](https://www.vanillatweaks.net) datapack by Vanilla Tweaks
+- the [**Plated_Elytra**](https://mc.voodoobeard.com/) datapack by VoodooBeard
 
 Support can be enabled or disabled with one config option:
 

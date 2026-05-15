@@ -1,0 +1,14 @@
+{
+  "required": true,
+  "package": "net.ena.mixin",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "GroundPathNavigationMixin",
+    "LivingEntityMixin",
+    "PathNavigationAccessor",
+    "WalkNodeEvaluatorMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
