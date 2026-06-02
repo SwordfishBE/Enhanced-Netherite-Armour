@@ -11,7 +11,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.effect.MobEffects;
-import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
@@ -60,6 +60,7 @@ public final class ArmorEffectService {
                 && hasQualifiedArmorCombination(player, config);
 
         if (shouldApply) {
+            clearFireVisuals(player);
             ensureManagedEffect(player, managedPlayers);
         } else {
             removeManagedEffect(player);
@@ -75,7 +76,7 @@ public final class ArmorEffectService {
 
         Set<UUID> seenHorseIds = new HashSet<>();
         for (ServerLevel level : server.getAllLevels()) {
-            for (Horse horse : level.getEntities(EntityType.HORSE, horse -> true)) {
+            for (Horse horse : level.getEntities(EntityTypes.HORSE, horse -> true)) {
                 seenHorseIds.add(horse.getUUID());
                 if (hasNetheriteHorseArmor(horse)) {
                     enableLavaPathing(horse);
@@ -118,10 +119,10 @@ public final class ArmorEffectService {
         return HorseLavaProtection.isProtectedLavaHorse(horse);
     }
 
-    private void clearFireVisuals(Horse horse) {
-        if (horse.getRemainingFireTicks() > 0 || horse.isOnFire()) {
-            horse.clearFire();
-            horse.setRemainingFireTicks(0);
+    private void clearFireVisuals(LivingEntity entity) {
+        if (entity.getRemainingFireTicks() > 0 || entity.isOnFire()) {
+            entity.clearFire();
+            entity.setRemainingFireTicks(0);
         }
     }
 
@@ -232,7 +233,7 @@ public final class ArmorEffectService {
 
     private void clearManagedHorses(MinecraftServer server) {
         for (ServerLevel level : server.getAllLevels()) {
-            for (Horse horse : level.getEntities(EntityType.HORSE, horse -> managedHorses.contains(horse.getUUID())
+            for (Horse horse : level.getEntities(EntityTypes.HORSE, horse -> managedHorses.contains(horse.getUUID())
                     || managedHorsePathing.containsKey(horse.getUUID()))) {
                 restorePathing(horse);
                 removeManagedEffect(horse, managedHorses);
