@@ -2,12 +2,17 @@ package net.ena.player;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.Strictness;
 import net.ena.EnhancedNetheriteArmour;
+import net.ena.util.AtomicFiles;
 import net.fabricmc.loader.api.FabricLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.io.Reader;
-import java.io.Writer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.LinkedHashSet;
@@ -16,40 +21,55 @@ import java.util.UUID;
 
 public final class PlayerToggleManager {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final String FILE_NAME = "enhancednetheritearmour-player-settings.json";
-
-    private final Path filePath = FabricLoader.getInstance().getConfigDir().resolve(FILE_NAME);
+    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().setStrictness(Strictness.STRICT).create();
+    private static final Logger LOGGER = LoggerFactory.getLogger(EnhancedNetheriteArmour.MOD_ID);
+    private final Path filePath;
     private final Set<UUID> disabledPlayers = new LinkedHashSet<>();
 
-    public void load() {
-        disabledPlayers.clear();
+    public PlayerToggleManager() {
+        this(FabricLoader.getInstance().getConfigDir().resolve("enhancednetheritearmour-player-settings.json"));
+    }
 
-        if (!Files.exists(filePath)) {
-            save();
-            return;
-        }
+    PlayerToggleManager(Path filePath) {
+        this.filePath = filePath;
+    }
 
-        try (Reader reader = Files.newBufferedReader(filePath)) {
-            StoredPreferences storedPreferences = GSON.fromJson(reader, StoredPreferences.class);
-            if (storedPreferences == null || storedPreferences.disabledPlayers == null) {
-                return;
-            }
-
-            for (String playerId : storedPreferences.disabledPlayers) {
-                try {
-                    disabledPlayers.add(UUID.fromString(playerId));
-                } catch (IllegalArgumentException exception) {
-                    EnhancedNetheriteArmour.LOGGER.warn("{} Ignoring invalid player UUID '{}' in saved toggles.",
-                            EnhancedNetheriteArmour.prefix(), playerId);
+    public boolean load() {
+        try {
+            Set<UUID> loaded = new LinkedHashSet<>();
+            if (Files.notExists(filePath)) {
+                if (!save(loaded)) {
+                    return false;
+                }
+            } else {
+                JsonElement root = GSON.fromJson(Files.readString(filePath), JsonElement.class);
+                if (root == null || !root.isJsonObject()) {
+                    throw new JsonParseException("Player settings must be a JSON object.");
+                }
+                JsonElement entries = root.getAsJsonObject().get("disabledPlayers");
+                if (entries == null || !entries.isJsonArray()) {
+                    throw new JsonParseException("disabledPlayers must be an array.");
+                }
+                for (JsonElement entry : entries.getAsJsonArray()) {
+                    if (!entry.isJsonPrimitive() || !entry.getAsJsonPrimitive().isString()) {
+                        LOGGER.warn("[EnhancedNetheriteArmour] Ignoring a non-string player UUID in saved toggles.");
+                        continue;
+                    }
+                    try {
+                        loaded.add(UUID.fromString(entry.getAsString()));
+                    } catch (IllegalArgumentException exception) {
+                        LOGGER.warn("[EnhancedNetheriteArmour] Ignoring invalid player UUID '{}' in saved toggles.",
+                                entry.getAsString());
+                    }
                 }
             }
-
-            EnhancedNetheriteArmour.LOGGER.debug("{} Loaded {} player toggle entries.",
-                    EnhancedNetheriteArmour.prefix(), disabledPlayers.size());
-        } catch (IOException exception) {
-            EnhancedNetheriteArmour.LOGGER.warn("{} Failed to load player toggle settings.",
-                    EnhancedNetheriteArmour.prefix(), exception);
+            disabledPlayers.clear();
+            disabledPlayers.addAll(loaded);
+            return true;
+        } catch (IOException | RuntimeException exception) {
+            LOGGER.warn("[EnhancedNetheriteArmour] Failed to load player settings; leaving the file and current preferences untouched.",
+                    exception);
+            return false;
         }
     }
 
@@ -57,35 +77,33 @@ public final class PlayerToggleManager {
         return !disabledPlayers.contains(playerId);
     }
 
-    public void setEnabled(UUID playerId, boolean enabled) {
-        if (enabled) {
-            disabledPlayers.remove(playerId);
-        } else {
-            disabledPlayers.add(playerId);
+    public boolean setEnabled(UUID playerId, boolean enabled) {
+        // Honor administrator edits and refuse to overwrite a file corrupted since startup.
+        if (!load()) {
+            return false;
         }
-        save();
+        Set<UUID> updated = new LinkedHashSet<>(disabledPlayers);
+        boolean changed = enabled ? updated.remove(playerId) : updated.add(playerId);
+        if (!changed) {
+            return true;
+        }
+        if (!save(updated)) {
+            return false;
+        }
+        disabledPlayers.clear();
+        disabledPlayers.addAll(updated);
+        return true;
     }
 
-    private void save() {
-        StoredPreferences storedPreferences = new StoredPreferences();
-        for (UUID playerId : disabledPlayers) {
-            storedPreferences.disabledPlayers.add(playerId.toString());
-        }
-
+    private boolean save(Set<UUID> preferences) {
+        JsonObject root = new JsonObject();
+        root.add("disabledPlayers", GSON.toJsonTree(preferences.stream().map(UUID::toString).toList()));
         try {
-            Files.createDirectories(filePath.getParent());
-            try (Writer writer = Files.newBufferedWriter(filePath)) {
-                GSON.toJson(storedPreferences, writer);
-            }
-            EnhancedNetheriteArmour.LOGGER.debug("{} Saved player toggle settings to {}.",
-                    EnhancedNetheriteArmour.prefix(), filePath);
+            AtomicFiles.writeString(filePath, GSON.toJson(root));
+            return true;
         } catch (IOException exception) {
-            EnhancedNetheriteArmour.LOGGER.warn("{} Failed to save player toggle settings.",
-                    EnhancedNetheriteArmour.prefix(), exception);
+            LOGGER.warn("[EnhancedNetheriteArmour] Failed to save player settings; keeping current preferences.", exception);
+            return false;
         }
-    }
-
-    private static final class StoredPreferences {
-        private final Set<String> disabledPlayers = new LinkedHashSet<>();
     }
 }

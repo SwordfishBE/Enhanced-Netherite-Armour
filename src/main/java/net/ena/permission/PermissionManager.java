@@ -12,7 +12,7 @@ public final class PermissionManager {
     public static final String TOGGLE_PERMISSION = "enhancednetheritearmour.toggle";
 
     private static boolean luckPermsInstalled;
-    private static boolean luckPermsActive;
+    private static volatile boolean luckPermsActive;
 
     private PermissionManager() {
     }

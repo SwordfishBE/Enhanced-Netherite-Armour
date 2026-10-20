@@ -29,7 +29,6 @@ import java.util.UUID;
 
 public final class ArmorEffectService {
 
-    private static final int EFFECT_DURATION_TICKS = 340;
     private static final int REFRESH_THRESHOLD_TICKS = 80;
     private static final double LAVA_FLOAT_MIN_UPWARD_SPEED = 0.06D;
     private static final double LAVA_FLOAT_MAX_UPWARD_SPEED = 0.16D;
@@ -37,8 +36,6 @@ public final class ArmorEffectService {
     private static final double LAVA_SURFACE_FLUID_HEIGHT = 0.55D;
     private static final double LAVA_DEEP_FLUID_HEIGHT = 1.2D;
     private static final double LAVA_FAST_SINKING_SPEED = -0.08D;
-    private final Set<UUID> managedPlayers = new HashSet<>();
-    private final Set<UUID> managedHorses = new HashSet<>();
     private final Map<UUID, HorsePathingMalus> managedHorsePathing = new HashMap<>();
 
     public void tick(MinecraftServer server) {
@@ -61,7 +58,7 @@ public final class ArmorEffectService {
 
         if (shouldApply) {
             clearFireVisuals(player);
-            ensureManagedEffect(player, managedPlayers);
+            ensureManagedEffect(player);
         } else {
             removeManagedEffect(player);
         }
@@ -83,15 +80,14 @@ public final class ArmorEffectService {
                     clearFireVisuals(horse);
                     floatInLava(horse);
                     dismountPassengersUnderLava(horse);
-                    ensureManagedEffect(horse, managedHorses);
+                    ensureManagedEffect(horse);
                 } else {
                     restorePathing(horse);
-                    removeManagedEffect(horse, managedHorses);
+                    removeManagedEffect(horse);
                 }
             }
         }
 
-        managedHorses.retainAll(seenHorseIds);
         managedHorsePathing.keySet().retainAll(seenHorseIds);
     }
 
@@ -178,77 +174,48 @@ public final class ArmorEffectService {
         }
     }
 
-    private void ensureManagedEffect(LivingEntity entity, Set<UUID> managedEntities) {
+    private void ensureManagedEffect(LivingEntity entity) {
         MobEffectInstance current = entity.getEffect(MobEffects.FIRE_RESISTANCE);
         if (current != null) {
-            if (isManagedEffect(current)) {
-                managedEntities.add(entity.getUUID());
-                if (!current.endsWithin(REFRESH_THRESHOLD_TICKS)) {
-                    return;
-                }
-            } else {
-                managedEntities.remove(entity.getUUID());
+            if (!ManagedFireResistance.isOwned(current) || !current.endsWithin(REFRESH_THRESHOLD_TICKS)) {
                 return;
             }
+            // Replace only our untouched effect; updating in place would relinquish ownership.
+            entity.removeEffect(MobEffects.FIRE_RESISTANCE);
         }
-
-        entity.addEffect(new MobEffectInstance(
-                MobEffects.FIRE_RESISTANCE,
-                EFFECT_DURATION_TICKS,
-                0,
-                false,
-                false,
-                false
-        ));
-
-        MobEffectInstance updated = entity.getEffect(MobEffects.FIRE_RESISTANCE);
-        if (updated != null && isManagedEffect(updated)) {
-            managedEntities.add(entity.getUUID());
-        }
+        entity.addEffect(new ManagedFireResistance(ManagedFireResistance.DURATION_TICKS));
     }
 
-    private void removeManagedEffect(ServerPlayer player) {
-        removeManagedEffect(player, managedPlayers);
-    }
-
-    private void removeManagedEffect(LivingEntity entity, Set<UUID> managedEntities) {
-        if (!managedEntities.contains(entity.getUUID())) {
-            return;
+    private void removeManagedEffect(LivingEntity entity) {
+        if (ManagedFireResistance.isOwned(entity.getEffect(MobEffects.FIRE_RESISTANCE))) {
+            entity.removeEffect(MobEffects.FIRE_RESISTANCE);
         }
-
-        MobEffectInstance current = entity.getEffect(MobEffects.FIRE_RESISTANCE);
-        if (current == null) {
-            managedEntities.remove(entity.getUUID());
-            return;
-        }
-
-        if (!isManagedEffect(current)) {
-            managedEntities.remove(entity.getUUID());
-            return;
-        }
-
-        entity.removeEffect(MobEffects.FIRE_RESISTANCE);
-        managedEntities.remove(entity.getUUID());
     }
 
     private void clearManagedHorses(MinecraftServer server) {
         for (ServerLevel level : server.getAllLevels()) {
-            for (Horse horse : level.getEntities(EntityTypes.HORSE, horse -> managedHorses.contains(horse.getUUID())
-                    || managedHorsePathing.containsKey(horse.getUUID()))) {
+            for (Horse horse : level.getEntities(EntityTypes.HORSE, horse -> true)) {
                 restorePathing(horse);
-                removeManagedEffect(horse, managedHorses);
+                removeManagedEffect(horse);
             }
         }
-        managedHorses.clear();
         managedHorsePathing.clear();
     }
 
-    private boolean isManagedEffect(MobEffectInstance effect) {
-        return effect.getAmplifier() == 0
-                && !effect.isAmbient()
-                && !effect.isVisible()
-                && !effect.showIcon()
-                && effect.endsWithin(EFFECT_DURATION_TICKS);
+    public void onEntityUnload(Entity entity) {
+        if (entity instanceof Horse horse) {
+            restorePathing(horse);
+            removeManagedEffect(horse);
+        } else if (entity instanceof ServerPlayer player) {
+            removeManagedEffect(player);
+        }
+    }
+
+    public void stop(MinecraftServer server) {
+        for (ServerPlayer player : server.getPlayerList().getPlayers()) {
+            removeManagedEffect(player);
+        }
+        clearManagedHorses(server);
     }
 
     private record HorsePathingMalus(float lava, float fireInNeighbor, float water, float waterBorder) {

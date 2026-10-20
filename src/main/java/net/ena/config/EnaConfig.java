@@ -2,8 +2,15 @@ package net.ena.config;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParseException;
+import com.google.gson.Strictness;
 import net.ena.EnhancedNetheriteArmour;
+import net.ena.util.AtomicFiles;
 import net.fabricmc.loader.api.FabricLoader;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -11,12 +18,10 @@ import java.nio.file.Path;
 
 public final class EnaConfig {
 
-    private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
-    private static final Path CONFIG_PATH = FabricLoader.getInstance()
-            .getConfigDir()
-            .resolve("enhancednetheritearmour.json");
+    private static final Gson GSON = new GsonBuilder().setStrictness(Strictness.STRICT).create();
+    private static final Logger LOGGER = LoggerFactory.getLogger(EnhancedNetheriteArmour.MOD_ID);
 
-    private static EnaConfig instance = new EnaConfig();
+    private static volatile EnaConfig instance = disabledDefaults();
 
     public boolean enabled = true;
     public boolean useLuckPerms = false;
@@ -28,52 +33,69 @@ public final class EnaConfig {
         return instance;
     }
 
-    public static void load() {
-        instance = loadForEditing();
-        save();
-        EnhancedNetheriteArmour.LOGGER.debug("{} Config loaded.", EnhancedNetheriteArmour.prefix());
+    private static EnaConfig disabledDefaults() {
+        EnaConfig config = new EnaConfig();
+        config.enabled = false;
+        return config;
+    }
+
+    private static Path configPath() {
+        return FabricLoader.getInstance().getConfigDir().resolve("enhancednetheritearmour.json");
+    }
+
+    public static boolean load() {
+        return load(configPath());
+    }
+
+    static boolean load(Path path) {
+        try {
+            EnaConfig loaded;
+            if (Files.notExists(path)) {
+                loaded = new EnaConfig();
+                AtomicFiles.writeString(path, toCommentedJson(loaded));
+            } else {
+                loaded = parse(Files.readString(path));
+            }
+            instance = loaded;
+            LOGGER.debug("[EnhancedNetheriteArmour] Config loaded.");
+            return true;
+        } catch (IOException | RuntimeException exception) {
+            LOGGER.warn("[EnhancedNetheriteArmour] Failed to load config; keeping current settings and leaving the file untouched.",
+                    exception);
+            return false;
+        }
+    }
+
+    static EnaConfig parse(String rawConfig) {
+        JsonElement root = GSON.fromJson(stripJsonComments(rawConfig), JsonElement.class);
+        if (root == null || !root.isJsonObject()) {
+            throw new JsonParseException("Config must be a JSON object.");
+        }
+        JsonObject object = root.getAsJsonObject();
+        for (String key : new String[]{"enabled", "useLuckPerms", "allowPlayerToggle",
+                "armoredElytraSupport", "horseFireProtection"}) {
+            if (object.has(key) && (!object.get(key).isJsonPrimitive()
+                    || !object.getAsJsonPrimitive(key).isBoolean())) {
+                throw new JsonParseException("Expected a boolean for " + key);
+            }
+        }
+        EnaConfig config = GSON.fromJson(object, EnaConfig.class);
+        config.normalize();
+        return config;
     }
 
     public static EnaConfig loadForEditing() {
-        EnaConfig loadedConfig = new EnaConfig();
-
-        if (Files.exists(CONFIG_PATH)) {
-            try {
-                String rawConfig = Files.readString(CONFIG_PATH);
-                String json = stripJsonComments(rawConfig);
-                EnaConfig parsed = GSON.fromJson(json, EnaConfig.class);
-                if (parsed != null) {
-                    loadedConfig = parsed;
-                }
-            } catch (IOException exception) {
-                EnhancedNetheriteArmour.LOGGER.warn("{} Failed to read config, using defaults.",
-                        EnhancedNetheriteArmour.prefix(), exception);
-            } catch (RuntimeException exception) {
-                EnhancedNetheriteArmour.LOGGER.warn("{} Failed to parse config, using defaults.",
-                        EnhancedNetheriteArmour.prefix(), exception);
-            }
-        }
-
-        loadedConfig.normalize();
-        return loadedConfig;
+        return instance.copy();
     }
 
     public static void applyEditedConfig(EnaConfig editedConfig) {
         EnaConfig normalized = editedConfig == null ? new EnaConfig() : editedConfig.copy();
         normalized.normalize();
-        instance = normalized;
-        save();
-    }
-
-    public static void save() {
         try {
-            Files.createDirectories(CONFIG_PATH.getParent());
-            Files.writeString(CONFIG_PATH, toCommentedJson(instance));
-            EnhancedNetheriteArmour.LOGGER.debug("{} Config saved to {}.",
-                    EnhancedNetheriteArmour.prefix(), CONFIG_PATH);
+            AtomicFiles.writeString(configPath(), toCommentedJson(normalized));
+            instance = normalized;
         } catch (IOException exception) {
-            EnhancedNetheriteArmour.LOGGER.warn("{} Failed to save config.",
-                    EnhancedNetheriteArmour.prefix(), exception);
+            LOGGER.warn("[EnhancedNetheriteArmour] Failed to save config; keeping current settings.", exception);
         }
     }
 
@@ -175,12 +197,14 @@ public final class EnaConfig {
             }
 
             if (current == '/' && next == '/') {
+                sb.append(' ');
                 inLineComment = true;
                 i++;
                 continue;
             }
 
             if (current == '/' && next == '*') {
+                sb.append(' ');
                 inBlockComment = true;
                 i++;
                 continue;
@@ -189,6 +213,9 @@ public final class EnaConfig {
             sb.append(current);
         }
 
+        if (inBlockComment) {
+            throw new JsonParseException("Unterminated block comment.");
+        }
         return sb.toString();
     }
 }

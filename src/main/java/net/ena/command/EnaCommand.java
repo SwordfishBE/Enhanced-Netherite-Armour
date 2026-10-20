@@ -91,7 +91,12 @@ public final class EnaCommand {
             return 0;
         }
 
-        EnhancedNetheriteArmour.getPlayerToggleManager().setEnabled(player.getUUID(), enabled);
+        if (!EnhancedNetheriteArmour.getPlayerToggleManager().setEnabled(player.getUUID(), enabled)) {
+            context.getSource().sendFailure(Component.literal(
+                    EnhancedNetheriteArmour.prefix() + " Could not save player settings. Ask an administrator to check the server log."
+            ));
+            return 0;
+        }
         EnhancedNetheriteArmour.getArmorEffectService().refreshPlayer(player);
 
         context.getSource().sendSuccess(() -> Component.literal(
@@ -102,7 +107,12 @@ public final class EnaCommand {
     }
 
     private static int executeReload(CommandContext<CommandSourceStack> context) {
-        EnhancedNetheriteArmour.reloadConfig();
+        if (!EnhancedNetheriteArmour.reloadConfig()) {
+            context.getSource().sendFailure(Component.literal(
+                    EnhancedNetheriteArmour.prefix() + " Config reload failed. Previous settings are still active; check the server log."
+            ));
+            return 0;
+        }
         context.getSource().sendSuccess(() -> Component.literal(
                 "§6" + EnhancedNetheriteArmour.prefix() + "§r Config reloaded."
         ), true);

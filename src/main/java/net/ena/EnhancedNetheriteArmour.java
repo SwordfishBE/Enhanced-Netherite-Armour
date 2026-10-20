@@ -10,6 +10,8 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
+import net.fabricmc.fabric.api.event.lifecycle.v1.ServerEntityEvents;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.metadata.ModMetadata;
 import org.slf4j.Logger;
@@ -41,6 +43,10 @@ public final class EnhancedNetheriteArmour implements ModInitializer {
         );
         ServerTickEvents.END_SERVER_TICK.register(server -> ARMOR_EFFECT_SERVICE.tick(server));
         ServerLifecycleEvents.SERVER_STARTED.register(server -> ModrinthUpdateChecker.checkOnceAsync());
+        ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
+                ARMOR_EFFECT_SERVICE.onEntityUnload(handler.player));
+        ServerEntityEvents.ENTITY_UNLOAD.register((entity, level) -> ARMOR_EFFECT_SERVICE.onEntityUnload(entity));
+        ServerLifecycleEvents.SERVER_STOPPING.register(ARMOR_EFFECT_SERVICE::stop);
 
         LOGGER.info("{} Mod initialized. Version: {}", prefix(), MOD_VERSION);
     }
@@ -62,9 +68,12 @@ public final class EnhancedNetheriteArmour implements ModInitializer {
         PermissionManager.refreshState(EnaConfig.get());
     }
 
-    public static void reloadConfig() {
-        EnaConfig.load();
+    public static boolean reloadConfig() {
+        if (!EnaConfig.load()) {
+            return false;
+        }
         PermissionManager.refreshState(EnaConfig.get());
+        return true;
     }
 
     public static String prefix() {
