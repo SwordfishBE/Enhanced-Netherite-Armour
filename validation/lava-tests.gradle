@@ -1,0 +1,30 @@
+gradle.projectsEvaluated {
+    def p = gradle.rootProject
+    def run = p.file('build/lava-tests/run')
+    def compileTests = p.tasks.register('compileLavaGameTests', JavaCompile) {
+        source p.fileTree('src/gametest/java') { include '**/*.java' }
+        classpath = p.sourceSets.main.runtimeClasspath
+        destinationDirectory = p.file('build/lava-tests/classes')
+        javaCompiler = p.javaToolchains.compilerFor { languageVersion = JavaLanguageVersion.of(25) }
+        options.release = 25
+        dependsOn p.tasks.named('classes')
+    }
+    def testJar = p.tasks.register('lavaGameTestJar', Jar) {
+        dependsOn compileTests
+        archiveFileName = 'ena-lava-tests.jar'
+        destinationDirectory = p.file('build/lava-tests')
+        from compileTests.flatMap { it.destinationDirectory }
+        from p.file('src/gametest/resources')
+    }
+    p.loom.runs.server.runDir(p.relativePath(run))
+    p.tasks.named('runServer') {
+        dependsOn testJar
+        jvmArgs '-Dfabric-api.gametest', '-XX:ActiveProcessorCount=4',
+                "-Dfabric-api.gametest.report-file=${p.file('build/lava-tests/results.xml')}"
+        maxHeapSize = '2G'
+        doFirst {
+            p.copy { from testJar; into new File(run, 'mods') }
+            workingDir run
+        }
+    }
+}

@@ -5,7 +5,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import net.ena.EnhancedNetheriteArmour;
-import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.SharedConstants;
 import net.fabricmc.loader.api.Version;
 import net.fabricmc.loader.api.VersionParsingException;
 
@@ -17,7 +17,6 @@ import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.time.Instant;
 import java.time.format.DateTimeParseException;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public final class ModrinthUpdateChecker {
@@ -25,7 +24,6 @@ public final class ModrinthUpdateChecker {
     private static final String PROJECT_ID = "lZiW97rL";
     private static final String RELEASE = "release";
     private static final String FABRIC = "fabric";
-    private static final String MINECRAFT_MOD_ID = "minecraft";
     private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(10);
     private static final HttpClient HTTP_CLIENT = HttpClient.newBuilder()
             .connectTimeout(REQUEST_TIMEOUT)
@@ -192,11 +190,8 @@ public final class ModrinthUpdateChecker {
         return second.publishedAt().isAfter(first.publishedAt()) ? second : first;
     }
 
-    private static String currentMinecraftVersion() {
-        return FabricLoader.getInstance()
-                .getModContainer(MINECRAFT_MOD_ID)
-                .map(container -> container.getMetadata().getVersion().getFriendlyString())
-                .orElse("unknown");
+    static String currentMinecraftVersion() {
+        return SharedConstants.getCurrentVersion().id();
     }
 
     private static boolean isNewerVersion(String candidate, String current) {

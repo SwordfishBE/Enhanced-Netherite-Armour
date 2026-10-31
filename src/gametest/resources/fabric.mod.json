@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "id": "ena_lava_tests",
+  "version": "1.0.0",
+  "name": "ENA Lava Regression Tests",
+  "environment": "server",
+  "entrypoints": {
+    "fabric-gametest": ["net.ena.gametest.HorseLavaTests"]
+  },
+  "depends": {
+    "enhancednetheritearmour": "*",
+    "fabric-gametest-api-v1": "*"
+  }
+}
