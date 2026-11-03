@@ -43,13 +43,28 @@ dependencies {
     compileOnly("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}") {
         exclude group: "net.fabricmc.fabric-api"
     }
-    localRuntime("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}") {
-        exclude group: "net.fabricmc.fabric-api"
+    if (!project.hasProperty('withoutCloth')) {
+        localRuntime("me.shedaniel.cloth:cloth-config-fabric:${project.cloth_config_version}") {
+            exclude group: "net.fabricmc.fabric-api"
+        }
     }
 }
 
 tasks.named('test') {
     useJUnitPlatform()
+}
+
+if (project.hasProperty('clientTests')) {
+    fabricApi.configureTests {
+        createSourceSet = true
+        modId = 'ena_client_tests'
+        enableGameTests = false
+        enableClientGameTests = true
+    }
+    sourceSets.gametest.java.setSrcDirs(['src/clientTest/java'])
+    sourceSets.gametest.resources.setSrcDirs(['src/clientTest/resources'])
+    sourceSets.gametest.compileClasspath += sourceSets.client.output + sourceSets.client.compileClasspath
+    sourceSets.gametest.runtimeClasspath += sourceSets.client.output + sourceSets.client.runtimeClasspath
 }
 
 processResources {

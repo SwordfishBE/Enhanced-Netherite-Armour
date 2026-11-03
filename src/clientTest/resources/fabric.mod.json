@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "ena_client_tests",
+  "version": "1.0.0",
+  "name": "ENA Optional Config Notice Tests",
+  "environment": "client",
+  "entrypoints": {
+    "fabric-client-gametest": ["net.ena.client.ClothNoticeClientTest"]
+  },
+  "depends": {
+    "enhancednetheritearmour": "*"
+  }
+}
