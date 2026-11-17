@@ -22,7 +22,7 @@ import net.minecraft.world.level.pathfinder.PathType;
 import net.minecraft.world.phys.Vec3;
 
 public final class HorseLavaTests {
-    private static void pool(GameTestHelper helper, boolean lava) {
+    static void pool(GameTestHelper helper, boolean lava) {
         for (int x = 0; x < 16; x++) {
             for (int z = 0; z < 16; z++) {
                 for (int y = 1; y <= 9; y++) {

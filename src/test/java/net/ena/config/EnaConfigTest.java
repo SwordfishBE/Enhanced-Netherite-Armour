@@ -20,6 +20,8 @@ class EnaConfigTest {
         assertTrue(EnaConfig.load(path));
         assertTrue(EnaConfig.get().enabled);
         assertTrue(EnaConfig.get().horseFireProtection);
+        assertFalse(EnaConfig.get().wolfFireProtection);
+        assertTrue(Files.readString(path).contains("\"wolfFireProtection\": false"));
         assertTrue(Files.readString(path).contains("//"));
     }
 
@@ -48,6 +50,12 @@ class EnaConfigTest {
         assertFalse(EnaConfig.get().enabled);
         assertEquals(text, Files.readString(path));
         assertNotSame(EnaConfig.get(), EnaConfig.loadForEditing());
+        assertFalse(EnaConfig.get().wolfFireProtection);
+    }
+
+    @Test
+    void enabledWolfProtectionSurvivesLoadingAndEditorCopy() {
+        assertTrue(EnaConfig.parse("{\"wolfFireProtection\":true}").copy().wolfFireProtection);
     }
 
     @Test

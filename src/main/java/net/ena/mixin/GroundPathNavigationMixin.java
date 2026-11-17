@@ -2,7 +2,7 @@ package net.ena.mixin;
 
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
-import net.ena.util.HorseLavaProtection;
+import net.ena.util.AnimalLavaProtection;
 import net.minecraft.tags.FluidTags;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.entity.Mob;
@@ -24,7 +24,7 @@ public abstract class GroundPathNavigationMixin extends PathNavigation {
             target = "Lnet/minecraft/world/entity/Mob;isInFloatableFluid()Z"))
     private boolean ena$useLavaSurface(Mob entity, Operation<Boolean> original) {
         return original.call(entity)
-                || entity.isInLava() && HorseLavaProtection.isProtectedLavaHorse(entity);
+                || entity.isInLava() && AnimalLavaProtection.isProtected(entity);
     }
 
     @WrapOperation(method = "getSurfaceY", at = @At(value = "INVOKE",
@@ -33,6 +33,6 @@ public abstract class GroundPathNavigationMixin extends PathNavigation {
         // Keep vanilla's surface scan and depth limit, including mixed water/lava boundaries.
         return original.call(state, tag)
                 || tag.equals(FluidTags.ENTITY_FLOATABLE) && state.is(FluidTags.LAVA)
-                && HorseLavaProtection.isProtectedLavaHorse(mob);
+                && AnimalLavaProtection.isProtected(mob);
     }
 }

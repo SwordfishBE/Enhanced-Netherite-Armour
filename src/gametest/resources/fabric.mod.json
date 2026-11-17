@@ -5,7 +5,7 @@
   "name": "ENA Lava Regression Tests",
   "environment": "server",
   "entrypoints": {
-    "fabric-gametest": ["net.ena.gametest.HorseLavaTests"]
+    "fabric-gametest": ["net.ena.gametest.HorseLavaTests", "net.ena.gametest.EnaCommandTests", "net.ena.gametest.WolfLavaTests"]
   },
   "depends": {
     "enhancednetheritearmour": "*",

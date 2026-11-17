@@ -1,15 +1,17 @@
 package net.ena.permission;
 
-import me.lucko.fabric.api.permissions.v0.Permissions;
+import net.fabricmc.fabric.api.permission.v1.PermissionContextOwner;
 import net.ena.EnhancedNetheriteArmour;
 import net.ena.config.EnaConfig;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 
 public final class PermissionManager {
 
-    public static final String USE_PERMISSION = "enhancednetheritearmour.use";
-    public static final String TOGGLE_PERMISSION = "enhancednetheritearmour.toggle";
+    // LuckPerms resolves namespace:path as the existing namespace.path node.
+    private static final Identifier USE_PERMISSION = Identifier.fromNamespaceAndPath(EnhancedNetheriteArmour.MOD_ID, "use");
+    private static final Identifier TOGGLE_PERMISSION = Identifier.fromNamespaceAndPath(EnhancedNetheriteArmour.MOD_ID, "toggle");
 
     private static boolean luckPermsInstalled;
     private static volatile boolean luckPermsActive;
@@ -42,10 +44,10 @@ public final class PermissionManager {
     }
 
     public static boolean canUse(ServerPlayer player) {
-        return !luckPermsActive || Permissions.check(player, USE_PERMISSION, false);
+        return !luckPermsActive || ((PermissionContextOwner) player).checkPermission(USE_PERMISSION, false);
     }
 
     public static boolean canToggle(ServerPlayer player) {
-        return !luckPermsActive || Permissions.check(player, TOGGLE_PERMISSION, false);
+        return !luckPermsActive || ((PermissionContextOwner) player).checkPermission(TOGGLE_PERMISSION, false);
     }
 }

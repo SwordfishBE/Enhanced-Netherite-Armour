@@ -4,7 +4,7 @@ import net.ena.EnhancedNetheriteArmour;
 import net.ena.config.EnaConfig;
 import net.ena.permission.PermissionManager;
 import net.ena.util.ArmoredElytraSupport;
-import net.ena.util.HorseLavaProtection;
+import net.ena.util.AnimalLavaProtection;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -15,7 +15,9 @@ import net.minecraft.world.entity.EntityTypes;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.Mob;
 import net.minecraft.world.entity.animal.equine.Horse;
+import net.minecraft.world.entity.animal.wolf.Wolf;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.pathfinder.PathType;
@@ -36,13 +38,13 @@ public final class ArmorEffectService {
     private static final double LAVA_SURFACE_FLUID_HEIGHT = 0.55D;
     private static final double LAVA_DEEP_FLUID_HEIGHT = 1.2D;
     private static final double LAVA_FAST_SINKING_SPEED = -0.08D;
-    private final Map<UUID, HorsePathingMalus> managedHorsePathing = new HashMap<>();
+    private final Map<UUID, AnimalPathingMalus> managedAnimalPathing = new HashMap<>();
 
     public void tick(MinecraftServer server) {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             refreshPlayer(player);
         }
-        refreshHorses(server);
+        refreshAnimals(server);
     }
 
     public void refreshPlayer(ServerPlayer player) {
@@ -64,31 +66,34 @@ public final class ArmorEffectService {
         }
     }
 
-    private void refreshHorses(MinecraftServer server) {
-        EnaConfig config = EnaConfig.get();
-        if (!config.enabled || !config.horseFireProtection) {
-            clearManagedHorses(server);
-            return;
-        }
-
-        Set<UUID> seenHorseIds = new HashSet<>();
+    private void refreshAnimals(MinecraftServer server) {
+        Set<UUID> protectedIds = new HashSet<>();
         for (ServerLevel level : server.getAllLevels()) {
             for (Horse horse : level.getEntities(EntityTypes.HORSE, horse -> true)) {
-                seenHorseIds.add(horse.getUUID());
-                if (hasNetheriteHorseArmor(horse)) {
-                    enableLavaPathing(horse);
-                    clearFireVisuals(horse);
-                    floatInLava(horse);
-                    dismountPassengersUnderLava(horse);
-                    ensureManagedEffect(horse);
-                } else {
-                    restorePathing(horse);
-                    removeManagedEffect(horse);
-                }
+                refreshAnimal(horse, protectedIds);
+            }
+            for (Wolf wolf : level.getEntities(EntityTypes.WOLF, wolf -> true)) {
+                refreshAnimal(wolf, protectedIds);
             }
         }
 
-        managedHorsePathing.keySet().retainAll(seenHorseIds);
+        managedAnimalPathing.keySet().retainAll(protectedIds);
+    }
+
+    private void refreshAnimal(Mob animal, Set<UUID> protectedIds) {
+        if (!AnimalLavaProtection.isProtected(animal)) {
+            restorePathing(animal);
+            removeManagedEffect(animal);
+            return;
+        }
+        protectedIds.add(animal.getUUID());
+        enableLavaPathing(animal);
+        clearFireVisuals(animal);
+        floatInLava(animal);
+        if (animal instanceof Horse horse) {
+            dismountPassengersUnderLava(horse);
+        }
+        ensureManagedEffect(animal);
     }
 
     public boolean hasQualifiedArmorCombination(ServerPlayer player, EnaConfig config) {
@@ -111,10 +116,6 @@ public final class ArmorEffectService {
         return !config.allowPlayerToggle || EnhancedNetheriteArmour.getPlayerToggleManager().isEnabled(player.getUUID());
     }
 
-    private boolean hasNetheriteHorseArmor(Horse horse) {
-        return HorseLavaProtection.isProtectedLavaHorse(horse);
-    }
-
     private void clearFireVisuals(LivingEntity entity) {
         if (entity.getRemainingFireTicks() > 0 || entity.isOnFire()) {
             entity.clearFire();
@@ -122,22 +123,22 @@ public final class ArmorEffectService {
         }
     }
 
-    private void floatInLava(Horse horse) {
-        if (!horse.isInLava()) {
+    private void floatInLava(Mob animal) {
+        if (!animal.isInLava()) {
             return;
         }
 
-        Vec3 movement = horse.getDeltaMovement();
-        double fluidHeight = horse.getFluidHeight(FluidTags.LAVA);
+        Vec3 movement = animal.getDeltaMovement();
+        double fluidHeight = animal.getFluidHeight(FluidTags.LAVA);
         double upwardSpeed = lavaUpwardSpeed(fluidHeight, movement.y);
 
         if (movement.y < upwardSpeed) {
-            horse.setDeltaMovement(
+            animal.setDeltaMovement(
                     movement.x,
                     upwardSpeed,
                     movement.z);
         }
-        horse.resetFallDistance();
+        animal.resetFallDistance();
     }
 
     private double lavaUpwardSpeed(double fluidHeight, double verticalMovement) {
@@ -159,18 +160,22 @@ public final class ArmorEffectService {
         return passenger.isEyeInFluid(FluidTags.LAVA);
     }
 
-    private void enableLavaPathing(Horse horse) {
-        managedHorsePathing.computeIfAbsent(horse.getUUID(), ignored -> HorsePathingMalus.capture(horse));
-        horse.setPathfindingMalus(PathType.LAVA, PathType.WATER.getMalus());
-        horse.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, PathType.WATER_BORDER.getMalus());
-        horse.setPathfindingMalus(PathType.WATER, PathType.WATER.getMalus());
-        horse.setPathfindingMalus(PathType.WATER_BORDER, PathType.WATER_BORDER.getMalus());
+    private void enableLavaPathing(Mob animal) {
+        managedAnimalPathing.computeIfAbsent(animal.getUUID(), ignored -> AnimalPathingMalus.capture(animal));
+        animal.setPathfindingMalus(PathType.LAVA, PathType.WATER.getMalus());
+        animal.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, PathType.WATER_BORDER.getMalus());
+        animal.setPathfindingMalus(PathType.WATER, PathType.WATER.getMalus());
+        animal.setPathfindingMalus(PathType.WATER_BORDER, PathType.WATER_BORDER.getMalus());
     }
 
-    private void restorePathing(Horse horse) {
-        HorsePathingMalus original = managedHorsePathing.remove(horse.getUUID());
+    private void restorePathing(Mob animal) {
+        AnimalPathingMalus original = managedAnimalPathing.remove(animal.getUUID());
         if (original != null) {
-            original.restore(horse);
+            original.restore(animal);
+            if (animal instanceof Wolf) {
+                // A cached route can still cross lava using the old path costs.
+                animal.getNavigation().stop();
+            }
         }
     }
 
@@ -192,20 +197,22 @@ public final class ArmorEffectService {
         }
     }
 
-    private void clearManagedHorses(MinecraftServer server) {
+    private void clearManagedAnimals(MinecraftServer server) {
         for (ServerLevel level : server.getAllLevels()) {
             for (Horse horse : level.getEntities(EntityTypes.HORSE, horse -> true)) {
-                restorePathing(horse);
-                removeManagedEffect(horse);
+                onEntityUnload(horse);
+            }
+            for (Wolf wolf : level.getEntities(EntityTypes.WOLF, wolf -> true)) {
+                onEntityUnload(wolf);
             }
         }
-        managedHorsePathing.clear();
+        managedAnimalPathing.clear();
     }
 
     public void onEntityUnload(Entity entity) {
-        if (entity instanceof Horse horse) {
-            restorePathing(horse);
-            removeManagedEffect(horse);
+        if (entity instanceof Mob animal && (animal instanceof Horse || animal instanceof Wolf)) {
+            restorePathing(animal);
+            removeManagedEffect(animal);
         } else if (entity instanceof ServerPlayer player) {
             removeManagedEffect(player);
         }
@@ -215,19 +222,19 @@ public final class ArmorEffectService {
         for (ServerPlayer player : server.getPlayerList().getPlayers()) {
             removeManagedEffect(player);
         }
-        clearManagedHorses(server);
+        clearManagedAnimals(server);
     }
 
-    private record HorsePathingMalus(float lava, float fireInNeighbor, float water, float waterBorder) {
-        private static HorsePathingMalus capture(Horse horse) {
-            return new HorsePathingMalus(
+    private record AnimalPathingMalus(float lava, float fireInNeighbor, float water, float waterBorder) {
+        private static AnimalPathingMalus capture(Mob horse) {
+            return new AnimalPathingMalus(
                     horse.getPathfindingMalus(PathType.LAVA),
                     horse.getPathfindingMalus(PathType.FIRE_IN_NEIGHBOR),
                     horse.getPathfindingMalus(PathType.WATER),
                     horse.getPathfindingMalus(PathType.WATER_BORDER));
         }
 
-        private void restore(Horse horse) {
+        private void restore(Mob horse) {
             horse.setPathfindingMalus(PathType.LAVA, lava);
             horse.setPathfindingMalus(PathType.FIRE_IN_NEIGHBOR, fireInNeighbor);
             horse.setPathfindingMalus(PathType.WATER, water);

@@ -15,14 +15,14 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class MinecraftCompatibilityTest {
     @ParameterizedTest
-    @ValueSource(strings = {"26.4-snapshot-6", "26.4-snapshot-7", "26.4-snapshot-10",
+    @ValueSource(strings = {"26.4-snapshot-8", "26.4-snapshot-10",
             "26.4-pre-1", "26.4-rc-1", "26.4"})
-    void acceptsSnapshotSixThroughFinal(String version) throws Exception {
+    void acceptsSnapshotEightThroughFinal(String version) throws Exception {
         assertTrue(supports(version), version);
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"26.3", "26.4-snapshot-1", "26.4-snapshot-5",
+    @ValueSource(strings = {"26.3", "26.4-snapshot-1", "26.4-snapshot-5", "26.4-snapshot-6", "26.4-snapshot-7",
             "26.4.1-pre-1", "26.4.1", "26.5-snapshot-1", "26.5", "27.1"})
     void rejectsVersionsOutsideTheRequestedRange(String version) throws Exception {
         assertFalse(supports(version), version);

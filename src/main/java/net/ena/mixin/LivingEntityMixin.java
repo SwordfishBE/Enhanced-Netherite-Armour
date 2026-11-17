@@ -1,6 +1,6 @@
 package net.ena.mixin;
 
-import net.ena.util.HorseLavaProtection;
+import net.ena.util.AnimalLavaProtection;
 import net.minecraft.world.entity.LivingEntity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,6 +18,6 @@ public abstract class LivingEntityMixin {
     )
     private boolean ena$useWaterTravelForProtectedLavaHorse(LivingEntity entity) {
         return entity.isInWater()
-                || entity.isInLava() && HorseLavaProtection.isProtectedLavaHorse(entity);
+                || entity.isInLava() && AnimalLavaProtection.isProtected(entity);
     }
 }

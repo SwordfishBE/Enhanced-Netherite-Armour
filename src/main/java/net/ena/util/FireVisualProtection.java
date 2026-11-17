@@ -17,7 +17,7 @@ public final class FireVisualProtection {
 
     public static boolean shouldHideFireAnimation(Entity entity) {
         return entity instanceof LivingEntity livingEntity
-                && (isProtectedPlayer(livingEntity) || HorseLavaProtection.isProtectedLavaHorse(entity));
+                && (isProtectedPlayer(livingEntity) || AnimalLavaProtection.isProtected(entity));
     }
 
     private static boolean isProtectedPlayer(LivingEntity entity) {

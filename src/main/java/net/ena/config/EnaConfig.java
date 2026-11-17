@@ -28,6 +28,7 @@ public final class EnaConfig {
     public boolean allowPlayerToggle = true;
     public boolean armoredElytraSupport = true;
     public boolean horseFireProtection = true;
+    public boolean wolfFireProtection = false;
 
     public static EnaConfig get() {
         return instance;
@@ -73,7 +74,7 @@ public final class EnaConfig {
         }
         JsonObject object = root.getAsJsonObject();
         for (String key : new String[]{"enabled", "useLuckPerms", "allowPlayerToggle",
-                "armoredElytraSupport", "horseFireProtection"}) {
+                "armoredElytraSupport", "horseFireProtection", "wolfFireProtection"}) {
             if (object.has(key) && (!object.get(key).isJsonPrimitive()
                     || !object.getAsJsonPrimitive(key).isBoolean())) {
                 throw new JsonParseException("Expected a boolean for " + key);
@@ -106,6 +107,7 @@ public final class EnaConfig {
         copy.allowPlayerToggle = allowPlayerToggle;
         copy.armoredElytraSupport = armoredElytraSupport;
         copy.horseFireProtection = horseFireProtection;
+        copy.wolfFireProtection = wolfFireProtection;
         return copy;
     }
 
@@ -125,7 +127,7 @@ public final class EnaConfig {
         appendProperty(sb, "useLuckPerms", config.useLuckPerms, true);
 
         appendComment(sb, "Allow players to toggle their own Fire Resistance support with /ena enable and /ena disable.");
-        appendComment(sb, "If false, the player commands stay unavailable and eligible players are always treated as enabled.");
+        appendComment(sb, "If false, the player commands reject execution and eligible players are always treated as enabled.");
         appendProperty(sb, "allowPlayerToggle", config.allowPlayerToggle, true);
 
         appendComment(sb, "Enable support for Armored Elytra and the compatible datapack variant.");
@@ -134,7 +136,11 @@ public final class EnaConfig {
 
         appendComment(sb, "Give Fire Resistance to horses wearing Netherite Horse Armor.");
         appendComment(sb, "This is a global server-side toggle and is not controlled per player.");
-        appendProperty(sb, "horseFireProtection", config.horseFireProtection, false);
+        appendProperty(sb, "horseFireProtection", config.horseFireProtection, true);
+
+        appendComment(sb, "Protect tamed wolves of any variant from fire and help them swim in lava while wearing Wolf Armor.");
+        appendComment(sb, "Disabled by default. Applies to all players' tamed wolves.");
+        appendProperty(sb, "wolfFireProtection", config.wolfFireProtection, false);
         sb.append("}\n");
         return sb.toString();
     }

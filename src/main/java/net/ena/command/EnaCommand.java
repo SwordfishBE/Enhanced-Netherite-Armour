@@ -9,6 +9,8 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.server.permissions.PermissionCheck;
+import net.minecraft.server.permissions.Permissions;
 
 public final class EnaCommand {
 
@@ -20,13 +22,11 @@ public final class EnaCommand {
                 Commands.literal("ena")
                         .executes(EnaCommand::executeInfo)
                         .then(Commands.literal("enable")
-                                .requires(source -> EnaConfig.get().allowPlayerToggle)
                                 .executes(EnaCommand::executeEnable))
                         .then(Commands.literal("disable")
-                                .requires(source -> EnaConfig.get().allowPlayerToggle)
                                 .executes(EnaCommand::executeDisable))
                         .then(Commands.literal("reload")
-                                .requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
+                                .requires(Commands.hasPermission(new PermissionCheck.Require(Permissions.COMMANDS_GAMEMASTER)))
                                 .executes(EnaCommand::executeReload))
         );
     }

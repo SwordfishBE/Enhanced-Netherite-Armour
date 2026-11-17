@@ -54,6 +54,12 @@ public final class EnhancedNetheriteArmourClothConfigScreen {
                 .setSaveConsumer(value -> config.horseFireProtection = value)
                 .build());
 
+        general.addEntry(entries.startBooleanToggle(Component.literal("Wolf Fire Protection"), config.wolfFireProtection)
+                .setDefaultValue(false)
+                .setTooltip(Component.literal("Protect tamed wolves wearing Wolf Armor from fire and help them swim in lava."))
+                .setSaveConsumer(value -> config.wolfFireProtection = value)
+                .build());
+
         return builder.build();
     }
 }

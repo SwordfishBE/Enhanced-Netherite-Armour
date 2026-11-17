@@ -1,6 +1,6 @@
 package net.ena.mixin;
 
-import net.ena.util.HorseLavaProtection;
+import net.ena.util.AnimalLavaProtection;
 import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import net.minecraft.tags.FluidTags;
@@ -24,7 +24,7 @@ public abstract class WalkNodeEvaluatorMixin extends NodeEvaluator {
             target = "Lnet/minecraft/world/entity/Mob;isInFloatableFluid()Z"))
     private boolean ena$startAtLavaSurface(Mob entity, Operation<Boolean> original) {
         return original.call(entity)
-                || entity.isInLava() && HorseLavaProtection.isProtectedLavaHorse(entity);
+                || entity.isInLava() && AnimalLavaProtection.isProtected(entity);
     }
 
     @WrapOperation(method = {"getStart", "getFloorLevel(Lnet/minecraft/core/BlockPos;)D"}, at = @At(value = "INVOKE",
@@ -32,7 +32,7 @@ public abstract class WalkNodeEvaluatorMixin extends NodeEvaluator {
     private boolean ena$useLavaSurfaceForNodes(FluidState state, TagKey<Fluid> tag, Operation<Boolean> original) {
         return original.call(state, tag)
                 || tag.equals(FluidTags.ENTITY_FLOATABLE) && state.is(FluidTags.LAVA)
-                && HorseLavaProtection.isProtectedLavaHorse(mob);
+                && AnimalLavaProtection.isProtected(mob);
     }
 
     @Inject(method = "getPathTypeOfMob", at = @At("RETURN"), cancellable = true)
@@ -43,7 +43,7 @@ public abstract class WalkNodeEvaluatorMixin extends NodeEvaluator {
             int z,
             Mob mob,
             CallbackInfoReturnable<PathType> cir) {
-        if (!HorseLavaProtection.isProtectedLavaHorse(mob)) {
+        if (!AnimalLavaProtection.isProtected(mob)) {
             return;
         }
 

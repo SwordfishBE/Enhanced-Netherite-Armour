@@ -5,7 +5,7 @@
 [![Modrinth Downloads](https://img.shields.io/modrinth/dt/lZiW97rL?logo=modrinth&logoColor=white&label=Modrinth%20downloads)](https://modrinth.com/mod/enhanced-netherite-armour)
 [![CurseForge Downloads](https://img.shields.io/curseforge/dt/1515682?logo=curseforge&logoColor=white&label=CurseForge%20downloads)](https://www.curseforge.com/minecraft/mc-mods/enhanced-netherite-armour)
 
-Give Netherite gear the extra heat-proof edge it deserves, for both players and their horses.
+Give Netherite gear the extra heat-proof edge it deserves, for both players and their dogs and horses.
 
 **Enhanced Netherite Armour** is a simple Fabric mod that grants **Fire Resistance** while a player is wearing a full Netherite armor set, and can also protect horses wearing Netherite Horse Armor from fire and sinking into lava.
 
@@ -27,11 +27,12 @@ Remove any one of those pieces, and the effect is removed again.
 - Simple commented config file
 - Optional player toggle with `/ena enable` and `/ena disable`
 - OP-only `/ena reload` command
-- Optional LuckPerms support through `fabric-permissions-api`
+- Optional LuckPerms support through Fabric Permission API v1
 - Optional Mod Menu support
 - Optional Cloth Config screen when Cloth Config is installed
 - Optional compatibility with Armored Elytra and supported armored elytra datapacks
 - Optional Fire Resistance for horses wearing Netherite Horse Armor
+- Optional Fire Resistance for dogs wearing Armor
 
 ---
 
@@ -85,7 +86,7 @@ Important:
   Enables the effect for the player when player toggles are allowed
 
 - `/ena disable`  
-  Disables the effect for the player when player toggles are allowed
+  Disables the effect for the player when player toggles are allowed. The toggle commands may remain visible when disabled in the config, but execution is rejected.
 
 - `/ena reload`  
   Reloads the config file  
@@ -134,17 +135,23 @@ Available options:
   
 ---
 
+## Wolf Fire Protection
+
+Set `"wolfFireProtection": true` in `config/enhancednetheritearmour.json` and run `/ena reload` as an operator to enable this feature. The option defaults to `false` and can be added to an existing config.
+
+Tamed wolves of every variant are protected from fire and lava while wearing Wolf Armor. They rise to the lava surface and can swim through it. Removing the armor removes ENA's protection.
+
 ## ‼️ Optional Client Integration
 
 The mod supports **Mod Menu** integration.
 
-If **Cloth Config** is also installed, a full config screen becomes available in-game.
+The config editor requires a compatible **Cloth Config**.
 
 This means:
 
-- Singleplayer with Mod Menu + Cloth Config: full config screen
+- Singleplayer with Mod Menu + compatible Cloth Config: full config screen
 - Dedicated server: works normally without Cloth Config
-- Client without Cloth Config: mod still works, just without the config GUI
+- Client with missing or older Cloth Config: mod still works; the config button shows a notice
 
 ---
 

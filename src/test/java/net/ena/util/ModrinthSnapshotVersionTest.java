@@ -9,6 +9,6 @@ class ModrinthSnapshotVersionTest {
     @Test
     void usesRawMinecraftIdInsteadOfTheLoaderAlphaAlias() {
         SharedConstants.tryDetectVersion();
-        assertEquals("26.4-snapshot-6", ModrinthUpdateChecker.currentMinecraftVersion());
+        assertEquals("26.4-snapshot-8", ModrinthUpdateChecker.currentMinecraftVersion());
     }
 }
